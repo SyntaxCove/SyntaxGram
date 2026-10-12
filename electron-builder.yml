@@ -1,0 +1,32 @@
+appId: com.igdesktop.app
+productName: SyntaxGram
+copyright: Released under the MIT license
+directories:
+  output: release
+  buildResources: resources
+files:
+  - dist/**
+  - package.json
+asar: true
+extraResources:
+  - from: resources
+    to: .
+    filter:
+      - icon.png
+      - icon.ico
+      - tray.png
+win:
+  icon: resources/icon.ico
+  target:
+    - target: nsis
+      arch:
+        - x64
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: SyntaxGram
+  artifactName: ${productName}-Setup-${version}.${ext}
+  uninstallDisplayName: SyntaxGram

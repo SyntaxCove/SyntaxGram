@@ -1,0 +1,150 @@
+@import "tailwindcss";
+
+/* Light theme is the default (user request). Adding `.dark` on <html>
+   switches every semantic token below — no component changes needed. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  /* content background (main area) */
+  --app-bg: #f4f4f5;
+  /* chrome + cards (titlebar, sidebar, toolbar, section cards) */
+  --app-surface: #ffffff;
+  /* inset elements (inputs, kbd chips, icon squares) */
+  --app-surface-2: #f4f4f5;
+  /* hover fill on light surfaces */
+  --app-hover: #f4f4f5;
+  --app-border: #e4e4e7;
+  --app-border-strong: #d4d4d8;
+  --app-t1: #18181b; /* strong text (headings, filenames) */
+  --app-t2: #52525b; /* secondary text (labels, body) */
+  --app-t3: #71717a; /* muted text (descriptions) */
+  --app-t4: #a1a1aa; /* faintest text (footers, hints) */
+  --app-scrollbar: #d4d4d8;
+  color-scheme: light;
+}
+
+.dark {
+  --app-bg: #09090b;
+  --app-surface: #101013;
+  --app-surface-2: #1e1e22;
+  --app-hover: #1e1e22;
+  --app-border: #27272a;
+  --app-border-strong: #3f3f46;
+  --app-t1: #f4f4f5;
+  --app-t2: #a1a1aa;
+  --app-t3: #71717a;
+  --app-t4: #52525b;
+  --app-scrollbar: #3a3a42;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-app: var(--app-bg);
+  --color-surface: var(--app-surface);
+  --color-surface-2: var(--app-surface-2);
+  --color-hover: var(--app-hover);
+  --color-line: var(--app-border);
+  --color-line-strong: var(--app-border-strong);
+  --color-t1: var(--app-t1);
+  --color-t2: var(--app-t2);
+  --color-t3: var(--app-t3);
+  --color-t4: var(--app-t4);
+}
+
+@theme {
+  --color-brand-1: #833ab4;
+  --color-brand-2: #e1306c;
+  --color-brand-3: #f77737;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--app-bg);
+  color: var(--app-t1);
+  font-family: "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, sans-serif;
+  overflow: hidden;
+  user-select: none;
+}
+
+.drag-region {
+  -webkit-app-region: drag;
+}
+
+.no-drag {
+  -webkit-app-region: no-drag;
+}
+
+.igd-gradient {
+  background: linear-gradient(135deg, var(--color-brand-1), var(--color-brand-2) 55%, var(--color-brand-3));
+}
+
+.igd-gradient-text {
+  background: linear-gradient(90deg, #a2308f, #e1306c, #f77737);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.igd-progress-track {
+  position: relative;
+  overflow: hidden;
+  border-radius: 9999px;
+  background: var(--app-border-strong);
+}
+
+.igd-progress-bar {
+  height: 100%;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, var(--color-brand-1), var(--color-brand-2), var(--color-brand-3));
+  transition: width 0.3s ease;
+}
+
+.igd-progress-indeterminate::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 40%;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, var(--color-brand-1), var(--color-brand-2), var(--color-brand-3));
+  animation: igd-indeterminate 1.4s ease-in-out infinite;
+}
+
+@keyframes igd-indeterminate {
+  0% {
+    left: -40%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--app-scrollbar);
+  border-radius: 8px;
+  border: 2px solid var(--app-bg);
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+button {
+  cursor: pointer;
+}
+
+select,
+input[type="text"] {
+  user-select: text;
+}
