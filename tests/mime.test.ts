@@ -1,3 +1,6 @@
+// Extension resolution: MIME type -> extension, URL extension hints and
+// the mime-trust sniffing fallback.
+
 import { describe, expect, it } from 'vitest';
 import { extForMime, extFromUrl } from '../src/main/core/mime';
 import { sniffMedia } from '../src/main/core/sniff';

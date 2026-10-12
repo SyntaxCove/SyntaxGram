@@ -1,3 +1,6 @@
+// Queue page: manual FIFO management — reorder jobs up/down, pause and
+// resume individual or all queued jobs. Rendering uses JobCard.
+
 import { ChevronDown, ChevronUp, ListOrdered, PauseCircle, PlayCircle } from 'lucide-react';
 import { useDownloadsStore } from '../stores/downloads';
 import { useSettingsStore } from '../stores/settings';

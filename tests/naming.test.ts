@@ -1,3 +1,6 @@
+// Filename and enqueue rules: username sanitizing, username-timestamp
+// naming, collision suffixes (-01, -02) and duplicate-behavior decisions.
+
 import { describe, expect, it } from 'vitest';
 import { baseFileName, decideEnqueue, sanitizeUsername, uniqueFileName } from '../src/main/core/naming';
 

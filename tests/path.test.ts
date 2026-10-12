@@ -1,3 +1,6 @@
+// Path containment guards: resolveInsideRoot / isInsideRoot /
+// sanitizeSegment — the defense against path traversal in download targets.
+
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { isInsideRoot, resolveInsideRoot, sanitizeSegment } from '../src/main/core/pathGuard';

@@ -1,3 +1,7 @@
+// Downloads page: all jobs filtered by status tabs (active / queued /
+// completed / failed) with bulk pause / resume / clear controls.
+// Rows are rendered by JobCard.
+
 import { useState } from 'react';
 import { Download, PauseCircle, PlayCircle, Trash2 } from 'lucide-react';
 import type { DownloadJob } from '../../../shared/types';

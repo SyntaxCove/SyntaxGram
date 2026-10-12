@@ -1,3 +1,7 @@
+// Zustand store for app settings. load() fetches the persisted settings
+// via IPC; apply(patch) sends the patch to the main process (validated
+// there) and stores the sanitized result that comes back.
+
 import { create } from 'zustand';
 import type { AppSettings, AppSettingsPatch } from '../../../shared/types';
 import { api } from '../lib/api';

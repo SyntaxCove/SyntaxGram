@@ -1,3 +1,7 @@
+// Dashboard (overview) page: queue stat cards (active / queued / completed
+// / failed), recent completed downloads, quick actions (open Instagram,
+// open download folder) and the active keyboard-shortcut cheat-sheet.
+
 import { AtSign, Camera, Download, FolderOpen, HardDrive, History, ListOrdered, Play, Zap } from 'lucide-react';
 import { useDownloadsStore } from '../stores/downloads';
 import { useSettingsStore } from '../stores/settings';

@@ -1,3 +1,7 @@
+// Global toast overlay: renders the toast store as stacked, auto-dismissing
+// notifications (success / error / info). Toasts are pushed by pages and by
+// main-process events alike.
+
 import { AlertCircle, CheckCircle2, Info } from 'lucide-react';
 import { useToastStore } from '../stores/toasts';
 

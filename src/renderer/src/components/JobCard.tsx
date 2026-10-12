@@ -1,3 +1,9 @@
+// Visual card for a single download job: type icon, filename, status chip,
+// @username, progress (bytes / percent / speed) and state-dependent actions
+// (pause, resume, retry, cancel, delete, open file / open folder).
+// Shared by the Downloads, Queue and Failed pages (showReason adds the
+// failure-reason line).
+
 import {
   ExternalLink,
   FolderOpen,

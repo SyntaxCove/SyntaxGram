@@ -1,6 +1,10 @@
 /// <reference lib="dom" />
 /// <reference lib="dom.iterable" />
 // @vitest-environment jsdom
+
+// Carousel expansion regression (v0.2.2): Instagram only keeps the first
+// ~3 slide <li> nodes in the DOM; walking the real Next button must
+// capture every slide index and restore the original scroll position.
 // Carousel progressive-render regression (user report): a 10-slide post was
 // detected and downloaded as 3 slides, because Instagram keeps only the first
 // few <li> slides in the DOM (and lazy-loads their media) until the user

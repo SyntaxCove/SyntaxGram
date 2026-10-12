@@ -1,3 +1,10 @@
+// Settings page: appearance (theme), download behavior (folder picker,
+// concurrency, retry attempts, duplicate handling), app integration
+// (notifications, start with Windows, minimize to tray), custom
+// User-Agent and remappable keyboard shortcuts (ShortcutRecorder).
+// Every change persists immediately via the settings store; the main
+// process validates it and applies it live.
+
 import { useState, useEffect } from 'react';
 import { Check, Contrast, FolderOpen, Keyboard, Loader2, RotateCcw } from 'lucide-react';
 import { DEFAULT_SHORTCUTS, SHORTCUT_ACTIONS, displayShortcut } from '../../../shared/shortcuts';
@@ -225,7 +232,7 @@ export function SettingsPage() {
         </SectionCard>
 
         <p className="mt-4 pb-4 text-center text-[11px] text-t4">
-          Settings and queue data are stored locally in %APPDATA%\instagram-desktop · session cookies never leave the app
+          Settings and queue data are stored locally on this device · session cookies never leave the app
         </p>
       </div>
     </div>

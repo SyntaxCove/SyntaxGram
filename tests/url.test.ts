@@ -1,3 +1,6 @@
+// URL guard: only https media URLs on official Instagram/Facebook CDN
+// hosts pass; everything else (javascript:, data:, foreign hosts) is rejected.
+
 import { describe, expect, it } from 'vitest';
 import { checkMediaUrl, isAllowedMediaUrl } from '../src/main/core/urlGuard';
 

@@ -1,3 +1,7 @@
+// Click-to-rebind keyboard shortcut control used on the Settings page.
+// Click "Change" and the recorder captures the next full key combo
+// (modifier-only presses are ignored with a flash), Escape cancels.
+
 import { useEffect, useState } from 'react';
 import { Keyboard, X } from 'lucide-react';
 import { comboFromEvent, shortcutChips } from '../../../shared/shortcuts';

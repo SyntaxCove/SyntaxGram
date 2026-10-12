@@ -221,8 +221,10 @@ export class CarouselAdapter {
 
   /**
    * Finds the carousel's real prev/next navigation button. Instagram renders
-   * these with a localized aria-label ("Next", "بعدی", "Siguiente", ...).
-   * Disabled buttons are skipped (they signal the end of the track).
+   * these with a localized aria-label (e.g. "Next" in English, "Siguiente"
+   * in Spanish — see the label lists in selectors.ts for all supported
+   * languages). Disabled buttons are skipped (they signal the end of the
+   * track).
    */
   static navButton(post: Element, dir: 'next' | 'prev'): HTMLElement | null {
     const words = dir === 'next' ? InstagramSelectors.nextButtonLabels : InstagramSelectors.prevButtonLabels;

@@ -1,5 +1,5 @@
 // Tests for magic-byte sniffing incl. the INVALID_MEDIA regression
-// (user report: "اکثر مواقع دانلود fail میشه — Response is not a recognized
+// (user report: "most downloads fail — Response is not a recognized
 // image/video"): brotli/gzip-wrapped bodies, AVIF served with the generic
 // "mif1" brand, and the text-vs-binary mime-trust fallback.
 import { describe, expect, it } from 'vitest';

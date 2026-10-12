@@ -1,127 +1,135 @@
 # SyntaxGram
 
-یک کلاینت دسکتاپ Windows-first برای **نسخه واقعی و رسمی وب اینستاگرام** با امکانات جانبی دانلود، صف مدیریت‌شده و Keyboard Shortcuts.
+A **Windows-first desktop client for the real, official Instagram web app** with first-class extras: media downloads, a managed download queue, and keyboard shortcuts.
 
-این برنامه اینستاگرام را از صفر بازسازی نمی‌کند؛ بلکه `https://www.instagram.com` را داخل یک `WebContentsView` امن اجرا می‌کند و لایه‌های جانبی (دکمه دانلود، صف، تاریخچه، تنظیمات) را در کنار آن اضافه می‌کند. **Login دقیقاً توسط خود اینستاگرام انجام می‌شود** و برنامه هیچ فرم ورود یا ذخیره‌سازی رمز عبور / 2FA ندارد.
+SyntaxGram does **not** rebuild Instagram. It runs `https://www.instagram.com` inside a secure Electron `WebContentsView` and adds side layers around it (download buttons, queue, history, settings). **Login is handled entirely by Instagram itself** — the app has no login form and never stores your password or 2FA codes.
+
+> **Unofficial project.** Not affiliated with, endorsed by, or sponsored by Instagram or Meta.
 
 ---
 
-## ویژگی‌ها
+## Features
 
-- **تجربه مرورگر اختصاصی اینستاگرام** — Home، Explore، Reels، Stories، پست‌ها، Login/Logout با session دائمی (پس از بستن و بازکردن برنامه، لاگین باقی می‌ماند)
-- **تم روشن به‌عنوان ظاهر پیش‌فرض** — با گزینه Dark در Settings برای محیط کم‌نور (+ تم dialog ها و toast های داخل صفحه اینستاگرام هم روشن است)
-- **دکمه Download روی پست‌ها** (در همان ردیف و بلافاصله کنار دکمه Like)، **دکمه Download شناور در گوشه** روی Story/Reel و مودال **Download Carousel** (اسلاید فعلی / همه اسلایدها)
-- **Keyboard Shortcuts قابل تغییر در Settings** — پیش‌فرض‌ها: `L` لایک، `D` دانلود همه، `Ctrl+D` دانلود اسلاید فعلی؛ هر سه از بخش Settings → Keyboard shortcuts با کلیک روی **Change** و فشردن کلیدهای جدید قابل تغییرند (بررسی تداخل خودکار، بدون نیاز به reload؛ روی Feed، پست، Reel و Story کار می‌کند — حتی وقتی فوکوس کیبورد روی پوسته اپ است — و هرگز هنگام تایپ)
-- **User-Agent اختیاری** — از Settings → Application؛ خالی = پیش‌فرض داخلی حفظ می‌شود، مقدار سفارشی پس از یک reload خودکار اعمال می‌شود
-- **صف دانلود حرفه‌ای** — FIFO با قابلیت reorder، تعداد دانلود همزمان قابل تنظیم (۱ تا ۱۰)، Pause/Resume/Cancel/Retry/Delete
-- **تاریخچه و Failed Downloads** با دلیل خطا و تعداد تلاش
-- **نام‌گذاری استاندارد** — `<username>-<unix_timestamp>.<ext>` و مدیریت collision با پسوند `-01`، `-02`
-- **ساختار پوشه** — `<DownloadRoot>/<username>/images|videos`
-- **تنظیمات کامل** — تم روشن/تیره، پوشه دانلود (Native Folder Picker)، تعداد دانلود همزمان، تعداد Retry، رفتار فایل تکراری، نوتیفیکیشن، Start with Windows، Minimize to Tray، تغییر Keyboard Shortcuts و User-Agent سفارشی
-- **Windows Integration** — نصب‌کننده NSIS، Start Menu، Tray، Notification های نیتیو، Open File/Folder
+- **Dedicated Instagram browsing experience** — Home, Explore, Reels, Stories, posts, Login/Logout with a persistent session (you stay logged in after closing and reopening the app)
+- **Light theme by default** — with a Dark option in Settings for low-light environments (in-page Instagram dialogs and toasts are themed too)
+- **Download button on posts** (in the same row, right next to the Like button), a **floating download button** on Stories/Reels, and a **Download Carousel** modal (current slide / all slides)
+- **Full carousel support** — multi-slide posts are expanded by walking Instagram's real Next button, so *all* slides are detected and downloadable (not just the first ~3 that Instagram keeps in the DOM)
+- **Remappable keyboard shortcuts (Settings)** — defaults: `L` like, `D` download all, `Ctrl+D` download current slide; change any of them in Settings → Keyboard shortcuts by clicking **Change** and pressing new keys (automatic conflict detection, no page reload needed). They work on feed, posts, Reels and Stories — even when keyboard focus is on the app shell — and never while typing
+- **Optional User-Agent override** — Settings → Application; empty = built-in default (recommended), a custom value is applied after one automatic reload
+- **Professional download queue** — FIFO with manual reorder, configurable concurrency (1–10), Pause / Resume / Cancel / Retry / Delete
+- **History and Failed downloads** with failure reason and attempt count
+- **Standard naming** — `<username>-<unix_timestamp>.<ext>` with collision handling via `-01`, `-02` suffixes
+- **Folder structure** — `<DownloadRoot>/<username>/images|videos`
+- **Complete settings** — light/dark theme, download folder (native folder picker), max concurrent downloads, retry attempts, duplicate-file behavior, notifications, start with Windows, minimize to tray, remappable shortcuts, custom User-Agent
+- **Windows integration** — NSIS installer, Start Menu shortcuts, system tray, native notifications, Open File/Folder
 
-## امنیت و حریم خصوصی
+## Security & privacy
 
-- `contextIsolation: true` و `nodeIntegration: false` و `sandbox: true` در همه window ها
-- Renderer هیچ دسترسی‌ای به Node.js / fs / shell ندارد؛ فقط یک API تایپ‌دار محدود (`window.instagramApp`)
-- هر پیام IPC در Main با validator سخت‌گیرانه بررسی می‌شود
-- URL ها فقط از هاست‌های رسمی `*.instagram.com / *.cdninstagram.com / *.fbcdn.net` با scheme ‌های `https` پذیرفته می‌شوند؛ `javascript:` / `data:` / `file:` / `blob:` رد می‌شوند
-- مسیر مقصد همیشه داخل Download Root تعیین‌شده توسط backend تصحیح (canonicalize) می‌شود؛ path traversal غیرممکن است
-- فایل‌ها به‌صورت atomic ذخیره می‌شوند (ابتدا `.part`، سپس rename) و با magic bytes اعتبارسنجی می‌شوند
-- **هیچ bypass، API خصوصی، دور زدن anti-bot/rate-limit یا DRM انجام نمی‌شود.** اگر مدیایی فقط با دور زدن مکانیزم‌های حفاظتی قابل دریافت باشد، آن آیتم `Failed/Unsupported` گزارش می‌شود
-- هیچ Credential logging وجود ندارد
+- `contextIsolation: true`, `nodeIntegration: false` and `sandbox: true` on every window
+- The renderer has **no** Node.js / fs / shell access — only a small, typed API (`window.instagramApp`)
+- Every IPC message is validated in the main process with strict validators
+- URLs are only accepted from official hosts (`*.instagram.com`, `*.cdninstagram.com`, `*.fbcdn.net`) over `https`; `javascript:` / `data:` / `file:` / `blob:` are rejected
+- The destination path is always canonicalized inside the backend-defined Download Root — path traversal is impossible
+- Files are written atomically (`.part` first, then rename) and validated by magic bytes
+- **No bypassing of any kind: no private APIs, no anti-bot / rate-limit evasion, no DRM circumvention.** If a medium can only be obtained by defeating a protection mechanism, the item is reported as `Failed / Unsupported`
+- No credential logging, ever
 
-## استک فناوری
+## Tech stack
 
-| بخش | فناوری |
+| Layer | Technology |
 |---|---|
 | Shell | Electron 44 (Main + WebContentsView) |
 | UI | React 19 + Tailwind CSS 4 + Zustand + Lucide |
-| Build | Vite 8 (۴ باندل مجزا: main / preload / injection / renderer) |
-| زبان | TypeScript 5.9 (strict) |
-| تست | Vitest |
-| بسته‌بندی | electron-builder (NSIS) |
-| Storage | JSON store داخلی با نوشتن atomic (بدون dependency بومی) |
+| Build | Vite 8 (4 separate bundles: main / preload / injection / renderer) |
+| Language | TypeScript 5.9 (strict) |
+| Testing | Vitest |
+| Packaging | electron-builder (NSIS) |
+| Storage | Built-in JSON store with atomic writes (no native dependencies) |
 
-## پیش‌نیازها
+## Prerequisites
 
-- **Node.js ≥ 22.12** و npm
-- Windows 10/11 برای build نهایی (توسعه روی Linux/macOS هم ممکن است)
+- **Node.js ≥ 22.12** and npm
+- Windows 10/11 for the final build (development on Linux/macOS works too)
 
-## راه‌اندازی (Development)
+## Getting started (development)
 
 ```bash
 npm install
 npm run dev
 ```
 
-`npm run dev` سه باندل main/preload/injection را در حالت watch می‌سازد، dev-server رندرر را روی پورت 5173 بالا می‌آورد و Electron را اجرا می‌کند.
+`npm run dev` builds the main/preload/injection bundles in watch mode, starts the renderer dev server on port 5173, and launches Electron.
 
-## تست و بررسی
+## Tests & checks
 
 ```bash
-npm run typecheck   # دو tsconfig مجزا (node/web)
-npm run test        # Vitest: صف، نام‌گذاری، URL guard، path guard، mime، خطاها، shortcut ها
+npm run typecheck   # two separate tsconfigs (node / web)
+npm run test        # Vitest: queue, naming, URL guard, path guard, MIME,
+                    # errors, shortcuts, settings, sniffing, carousel expansion
 npm run lint
 ```
 
-## ساخت نصب‌کننده Windows
+## Building the Windows installer
 
 ```bash
-npm run icon        # تولید resources/icon.png / icon.ico / tray.png (نیاز به Python + Pillow)
+npm run icon        # generate resources/icon.png / icon.ico / tray.png (needs Python + Pillow)
 npm run dist        # typecheck + build + electron-builder --win (NSIS x64)
 ```
 
-خروجی در پوشه `release/` قرار می‌گیرد: `SyntaxGram Setup 0.2.2.exe`
+Output lands in the `release/` folder: `SyntaxGram Setup 0.2.2.exe`
 
-## ساختار پروژه
+## Project structure
 
 ```
 src/
-├── shared/          ← تایپ‌ها، کانال‌های IPC، validator ها (قرارداد واحد همه لایه‌ها)
-├── main/            ← Main Process
-│   ├── app/         ← MainWindow + WebContentsView، Tray
-│   ├── core/        ← DownloadQueue (pure)، Downloader (استریمی)، DownloadManager،
-│   │                   MediaRegistry، JsonStore، Settings، History، urlGuard، pathGuard…
-│   └── ipc/         ← ثبت handler ها با validation کامل
-├── preload/         ← window.instagramApp (رندرر) + window.instagramBridge (ویو اینستاگرام)
-├── injection/       ← لایه بهبود اینستاگرام: Adapters + Resolvers + UI (بدون Node.js)
-└── renderer/        ← UI اپلیکیشن (Dashboard، Instagram، Downloads، Queue، Failed، History، Settings)
+├── shared/          ← types, IPC channels, validators (single contract for all layers)
+├── main/            ← Main process
+│   ├── app/         ← MainWindow + WebContentsView, Tray
+│   ├── core/        ← DownloadQueue (pure), Downloader (streaming), DownloadManager,
+│   │                   MediaRegistry, JsonStore, Settings, History, urlGuard, pathGuard…
+│   └── ipc/         ← handler registration with full validation
+├── preload/         ← window.instagramApp (app renderer) + window.instagramBridge (Instagram view)
+├── injection/       ← Instagram enhancement layer: Adapters + Resolvers + UI (no Node.js)
+└── renderer/        ← app shell UI (Dashboard, Instagram, Downloads, Queue, Failed, History, Settings)
 ```
 
-### معماری دانلود
+### Download architecture
 
 ```
 UI / Injection Layer
         ↓  (validated payload)
-DownloadManager  ←  تنها نقطه ورود دانلود (§29)
+DownloadManager  ←  the single download entry point
         ↓
 DownloadQueue (FIFO + concurrency + retry/backoff)
         ↓
-Downloader (net.request روی session اینستاگرام، استریمی، .part → rename)
+Downloader (net.request on the Instagram session, streaming, .part → rename)
         ↓
 File Writer + magic-byte validation + native notification
 ```
 
-### MediaResolver (§10)
+### MediaResolver
 
-ترتیب اولویت: `DOMResolver` → `MetadataResolver` → `ResourceResolver` → `NetworkResourceResolver` — هیچ‌کدام به یک CSS selector واحد وابسته نیستند؛ از ساختار معنایی (`article`، `dialog`، دکمه‌های aria-label دار)، srcset، Open-Graph/JSON-LD و رکوردهای network session استفاده می‌شود. Selector ها تنها در `injection/adapters/selectors.ts` نگهداری می‌شوند (§11/§46).
+Priority order: `DOMResolver` → `MetadataResolver` → `ResourceResolver` → `NetworkResourceResolver`. None of them depends on a single CSS selector; they use semantic structure (`article`, `dialog`, aria-labeled buttons), `srcset`, Open-Graph/JSON-LD metadata and network-session records. All DOM selectors live in exactly one file — `src/injection/adapters/selectors.ts` — which makes maintenance straightforward when Instagram changes its markup.
 
-## محدودیت‌های شناخته‌شده (MVP)
+### Carousel expansion
 
-- ویدیوهایی که فقط با MSE/blob پخش می‌شوند تنها زمانی قابل دانلود هستند که URL واقعی mp4 در همان session دیده شده باشد (MediaRegistry)
-- URL های CDN اینستاگرام منقضی می‌شوند؛ اگر یک Job مدتی در صف بماند ممکن است با `HTTP_403/404` fail شود — کافی است آن را از Failed دوباره تلاش کنید تا URL تازه از صفحه گرفته شود (Retry آیتم‌های خیلی قدیمی باید از روی صفحه انجام شود)
-- Tamper-proof بودن در برابر تغییرات DOM اینستاگرام تضمین صددرصدی نیست؛ چون همه selector ها در یک فایل متمرکزند، نگهداری آسان است
+Instagram only keeps the first ~3 slide `<li>` nodes in the DOM and lazy-mounts the rest. Before downloading a multi-slide post, the injection layer programmatically walks the carousel's real Next button until the track ends, captures each slide's element by index, restores the original scroll position and caches the result — so "Download all slides" gets the full slide count, and stale capture is refreshed per open.
 
-## عیب‌یابی
+## Known limitations (MVP)
 
-- **ویندوز SmartScreen هشدار داد:** فایل نصب امضای دیجیتال ندارد؛ «More info → Run anyway» را انتخاب کنید
-- **لاگین باز نمی‌شود:** از دکمه Reload در toolbar استفاده کنید؛ session در پارتیشن `persist:instagram` ذخیره می‌شود
-- **دکمه دانلود ظاهر نمی‌شود:** لایه injection پس از هر navigation دوباره اجرا می‌شود؛ یک بار Reload کنید
-- **خطای DISK_FULL:** فضای دیسک Download Root را بررسی کنید
+- Videos that play exclusively via MSE/blob are only downloadable if the real mp4 URL was observed in the same session (MediaRegistry)
+- Instagram CDN URLs expire; a job that sits in the queue too long may fail with `HTTP_403/404` — retry it from the Failed page to pick up a fresh URL from the page (very old items should be retried from the page itself)
+- Tamper-proofing against Instagram DOM changes cannot be guaranteed 100%; since every selector is centralized in one file, maintenance is kept easy
 
-## لایسنس
+## Troubleshooting
 
-کد این پروژه تحت **MIT License** منتشر شده است — استفاده، تغییر و بازنشر آزاد است، **به شرط ذکر منبع**: اعلان کپی‌رایت و این لایسنس باید در همهٔ کپی‌ها حفظ شود و به ریپوی اصلی (<https://github.com/SyntaxCove/SyntaxGram>) ارجاع داده شود (در سورس، مستندات یا بخش About اثر مشتق‌شده).
+- **Windows SmartScreen shows a warning:** the installer is not digitally signed; choose "More info → Run anyway"
+- **Login page won't open:** use the Reload button in the toolbar; the session lives in the `persist:instagram` partition
+- **Download buttons don't appear:** the injection layer re-runs after every navigation; reload the page once
+- **DISK_FULL error:** check the free space of your Download Root
 
-**نام و برندینگ استثناست:** نام «SyntaxGram»، لوگو، نام نصب‌کننده و همهٔ برندینگ مرتبط تحت لایسنس MIT **منتشر نمی‌شوند** و متعلق به SyntaxCove هستند. هیچ مجوزی برای استفاده از این نام (یا نامی مشابه و گمراه‌کننده) برای fork، اثر مشتق‌شده یا محصول دیگری داده نمی‌شود — اثرهای مشتق‌شده باید با نامی متفاوت منتشر شوند. جزئیات کامل در فایل [LICENSE](./LICENSE).
+## License
+
+The source code of this project is released under the **MIT license with additional terms** — use, modification and redistribution are free, **provided the source is credited**: the copyright notice and this license must be retained in all copies, and the original project must be credited (<https://github.com/SyntaxCove/SyntaxGram>) in the source, documentation, or the About section of the derived work.
+
+**The name and branding are an exception:** the name "SyntaxGram", its logo, the installer name and all related branding are **not** covered by the MIT grant and remain the property of SyntaxCove. No license is granted to use this name (or any confusingly similar one) for a fork, derivative work or other product — derivative works must be published under a different name. See the full terms in [LICENSE](./LICENSE).

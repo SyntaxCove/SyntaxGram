@@ -1,3 +1,7 @@
+// Zustand store for download jobs + queue stats. Seeded once via load()
+// (IPC snapshot) and kept live by main-process push events routed in
+// App.tsx (api.events.onJobs / onStats).
+
 import { create } from 'zustand';
 import type { DownloadJob, QueueStats } from '../../../shared/types';
 import { api } from '../lib/api';

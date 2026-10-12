@@ -1,3 +1,6 @@
+// Zustand store for in-app toasts: push() appends a toast (capped at 5
+// visible) and auto-removes it after ~4 seconds; remove() dismisses early.
+
 import { create } from 'zustand';
 import type { ToastKind } from '../../../shared/types';
 

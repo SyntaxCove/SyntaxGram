@@ -1,3 +1,6 @@
+// History page: previously completed downloads with username filtering and
+// open file / open containing-folder actions.
+
 import { useEffect, useState } from 'react';
 import { AtSign, FolderOpen, History, Image as ImageIcon, Search, Trash2, Video } from 'lucide-react';
 import type { HistoryEntry } from '../../../shared/types';

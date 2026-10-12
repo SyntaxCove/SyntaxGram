@@ -1,3 +1,6 @@
+// Keyboard shortcut model: combo parsing from DOM events, display
+// formatting and default/conflict handling.
+
 import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_SHORTCUTS,

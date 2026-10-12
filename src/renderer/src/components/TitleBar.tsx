@@ -1,3 +1,7 @@
+// Custom title bar for the frameless window: CSS drag region, app branding,
+// current page label and native window controls (minimize / maximize /
+// restore / close) routed through the preload API.
+
 import { Camera, Copy, Minus, X } from 'lucide-react';
 import { useUiStore } from '../stores/ui';
 import { api } from '../lib/api';
@@ -13,7 +17,7 @@ export function TitleBar() {
           <Camera size={16} className="text-white" />
         </div>
         <span className="text-[13px] font-semibold text-t1">
-          Instagram <span className="igd-gradient-text">Desktop</span>
+          Syntax<span className="igd-gradient-text">Gram</span>
         </span>
         <span className="ml-2 hidden text-[11px] uppercase tracking-wider text-t4 sm:inline">{page}</span>
       </div>

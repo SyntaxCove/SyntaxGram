@@ -1,3 +1,8 @@
+// Renderer-side API surface. `api` is the typed `window.instagramApp`
+// bridge exposed by src/preload/index.ts — the ONLY way the renderer can
+// reach the main process (no direct Node access). Also hosts small pure
+// formatting helpers (bytes, speed, relative time) shared by all pages.
+
 import type { InstagramAppApi } from '../../../shared/types';
 
 export const api: InstagramAppApi = window.instagramApp;

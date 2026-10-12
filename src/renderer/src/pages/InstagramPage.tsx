@@ -1,3 +1,8 @@
+// Toolbar for the embedded Instagram view: back / forward / reload / home,
+// current URL, active shortcut hints and open-in-system-browser.
+// The native WebContentsView renders directly below this strip (the
+// placeholder underneath is only visible while the view loads).
+
 import { ChevronLeft, ChevronRight, ExternalLink, Home, RefreshCw } from 'lucide-react';
 import { useSettingsStore } from '../stores/settings';
 import { useUiStore } from '../stores/ui';

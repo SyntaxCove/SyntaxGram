@@ -1,3 +1,6 @@
+// Settings patch validation: unknown keys dropped, types/enums/ranges
+// enforced before anything is persisted.
+
 import { describe, expect, it } from 'vitest';
 import { sanitizeSettingsPatch, sanitizeShortcutsPatch } from '../src/shared/validators';
 

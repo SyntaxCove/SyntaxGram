@@ -5,7 +5,7 @@
   "description": "SyntaxGram — Instagram Web as a native-feeling Windows desktop app with a privacy-friendly media download manager",
   "main": "dist/main/index.js",
   "private": true,
-  "license": "MIT",
+  "license": "SEE LICENSE IN LICENSE",
   "author": {
     "name": "SyntaxCove"
   },

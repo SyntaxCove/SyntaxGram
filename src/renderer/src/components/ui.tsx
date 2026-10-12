@@ -1,3 +1,8 @@
+// Shared UI primitives for all pages: SectionCard, StatCard, EmptyState,
+// IconButton, PrimaryButton / GhostButton, Toggle, Select, TextInput,
+// StatusChip and CloseButton. Built on the Tailwind theme tokens
+// (t1-t4 text, line, surface, brand-2) so pages stay visually consistent.
+
 import type { ReactNode } from 'react';
 import { X } from 'lucide-react';
 

@@ -1,3 +1,6 @@
+// Failed downloads page: reason and attempt count per job, with retry
+// (a retry re-resolves a fresh URL from the open page) and delete actions.
+
 import { AlertCircle, RotateCcw, Trash2 } from 'lucide-react';
 import { useDownloadsStore } from '../stores/downloads';
 import { api } from '../lib/api';

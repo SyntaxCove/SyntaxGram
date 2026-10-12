@@ -1,3 +1,14 @@
+// App shell: page switching, theming, shortcut relay, layout sync.
+// - Renders TitleBar + Sidebar + the active page (ui store holds the page id).
+// - Toggles the `dark` class on <html> to switch the Tailwind theme.
+// - Relays configured shortcuts to the Instagram view when keyboard focus is
+//   on the shell while the mouse hovers a post inside the view, and never
+//   while the user is typing in any editable element.
+// - One-time bootstrap: initial store loads + main-process event
+//   subscriptions (jobs, stats, toasts, settings, nav state).
+// - Reports shell geometry to the main process so the native
+//   WebContentsView is positioned or hidden correctly (updateLayout).
+
 import { useEffect } from 'react';
 import { HEADER_H, SIDEBAR_W, SIDEBAR_W_COLLAPSED, TOOLBAR_H } from '../../shared/layout';
 import { comboFromEvent } from '../../shared/shortcuts';

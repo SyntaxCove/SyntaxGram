@@ -1,3 +1,8 @@
+// Left navigation sidebar: Dashboard / Instagram / Downloads / Queue /
+// Failed / History / Settings. Shows a pending-jobs badge, collapses to an
+// icon rail and carries the app version in its footer. The active page id
+// lives in the ui store.
+
 import {
   AlertCircle,
   AtSign,

@@ -1,3 +1,6 @@
+// DownloadQueue core behavior: FIFO ordering, concurrency limit,
+// pause/resume, retry with attempts, cancel and stats updates.
+
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DownloadJob } from '../src/shared/types';
 import { DownloadQueue } from '../src/main/core/DownloadQueue';

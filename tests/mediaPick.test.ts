@@ -1,3 +1,6 @@
+// Per-slide candidate selection: candidate scoring (resolution, type),
+// bestOf selection and pickPerSlide dedupe across carousel slides.
+
 import { describe, expect, it } from 'vitest';
 import { bestOf, pickPerSlide, scoreCandidate } from '../src/main/core/mediaPick';
 import type { MediaCandidate } from '../src/shared/types';

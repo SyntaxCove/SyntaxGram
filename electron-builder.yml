@@ -1,6 +1,9 @@
+# Windows installer configuration (electron-builder / NSIS).
+# License note: the source code is MIT-licensed with additional attribution
+# and name-restriction terms — see the LICENSE file for details.
 appId: com.igdesktop.app
 productName: SyntaxGram
-copyright: Released under the MIT license
+copyright: MIT license with additional terms — see LICENSE
 directories:
   output: release
   buildResources: resources

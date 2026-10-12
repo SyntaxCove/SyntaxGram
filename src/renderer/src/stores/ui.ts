@@ -1,3 +1,7 @@
+// Zustand store for shell UI state: active page id, sidebar collapsed flag,
+// window maximized flag and the Instagram view's nav state (URL, back and
+// forward availability). The app opens on the Instagram page.
+
 import { create } from 'zustand';
 import type { NavState } from '../../../shared/types';
 

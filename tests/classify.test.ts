@@ -1,3 +1,6 @@
+// Error classification: HTTP status codes -> typed DownloadError codes,
+// unknown/system error mapping and retryability decisions.
+
 import { describe, expect, it } from 'vitest';
 import { classifyHttpError, classifyUnknownError } from '../src/main/core/classify';
 import { DownloadError } from '../src/main/core/errors';

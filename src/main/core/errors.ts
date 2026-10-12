@@ -1,3 +1,7 @@
+// Typed DownloadError with retryability metadata. Raw HTTP statuses and
+// Node/system error codes are mapped to these by classify.ts; the queue
+// consults `retryable` when deciding whether to schedule another attempt.
+
 import type { ErrorCode } from '../../shared/types';
 
 /** Typed download failure with retryability classification (spec §24/§31). */
