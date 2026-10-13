@@ -86,7 +86,7 @@ export function Sidebar() {
         </button>
         <div className={`mt-1 flex items-center gap-2 px-3 text-[10px] text-t4 ${collapsed ? 'justify-center' : ''}`}>
           <Camera size={11} />
-          {!collapsed && <span>Unofficial client · v0.2.2</span>}
+          {!collapsed && <span>Unofficial client · v0.2.3</span>}
         </div>
       </div>
     </nav>

@@ -5,6 +5,7 @@
 // (exposed by the view preload). Fully idempotent and SPA-aware.
 import type { AppSettings, DownloadRequestPayload, InstagramBridgeApi, MediaCandidate } from '../shared/types';
 import { comboFromEvent } from '../shared/shortcuts';
+import { installPasskeySuppressor } from '../shared/passkeySuppressor';
 import { MediaResolver } from './resolvers';
 import {
   CarouselAdapter,
@@ -18,6 +19,9 @@ import type { CarouselExpansion, HoverState } from './adapters';
 import { BTN_ATTR, createActionButton, ensureStyle, isModalOpen, openCarouselModal, pageToast } from './ui';
 
 (() => {
+  // Neutralize WebAuthn FIRST so no passkey modal can ever pop up, even if
+  // the preload-side guard was unavailable for some reason (idempotent).
+  installPasskeySuppressor(window);
   if (window.__IGD__) {
     window.__IGD__.refresh();
     return;

@@ -1,7 +1,7 @@
 {
   "name": "syntaxgram",
   "productName": "SyntaxGram",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "SyntaxGram — Instagram Web as a native-feeling Windows desktop app with a privacy-friendly media download manager",
   "main": "dist/main/index.js",
   "private": true,

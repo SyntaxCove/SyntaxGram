@@ -3,12 +3,13 @@
 // - Instagram Web runs inside a dedicated, sandboxed WebContentsView
 // - Persistent session partition keeps the user logged in across restarts (§4)
 // - The view is positioned by layout info sent from the renderer (§5)
-import { app, BrowserWindow, session, shell, WebContentsView } from 'electron';
+import { app, BrowserWindow, session, shell, webFrameMain, WebContentsView } from 'electron';
 import type { Session } from 'electron';
 import fs from 'node:fs';
 import path from 'node:path';
 import { INSTAGRAM_URL } from '../../shared/layout';
 import { IPC } from '../../shared/channels';
+import { passkeySuppressorSource } from '../../shared/passkeySuppressor';
 import type { LayoutInfo, NavState } from '../../shared/types';
 
 export const MAIN_PRELOAD_PATH = path.join(__dirname, '../preload/index.js');
@@ -147,6 +148,13 @@ export class MainWindowController {
       return { action: 'deny' };
     });
     wc.on('dom-ready', () => this.scheduleInject());
+    wc.on('did-frame-finish-load', (_event, isMainFrame, frameProcessId, frameRoutingId) => {
+      // Main frame: covered by the preload guard (runs before page scripts)
+      // and by the injection layer. Child frames (e.g. the Meta login iframe,
+      // which can issue its own WebAuthn requests) need the same guard.
+      if (isMainFrame) return;
+      this.injectPasskeyGuardIntoFrame(frameProcessId, frameRoutingId);
+    });
     wc.on('did-navigate', () => {
       this.pushNavState();
       this.scheduleInject();
@@ -189,6 +197,26 @@ export class MainWindowController {
     } catch (e) {
       console.error('[inject] cannot read injection bundle:', INJECTION_PATH, e);
     }
+  }
+
+  /**
+   * Injects the passkey guard into a CHILD frame (best effort). The frame may
+   * vanish between the load event and this call, and a frame that is still
+   * initializing may reject the first attempt — so run now and retry once.
+   * The main-frame guard lives in preload/instagram.ts; this only covers
+   * iframes whose main world is separate (v0.2.3 passkey fix).
+   */
+  private injectPasskeyGuardIntoFrame(processId: number, routingId: number): void {
+    const run = (): void => {
+      try {
+        const frame = webFrameMain.fromId(processId, routingId);
+        void frame?.executeJavaScript(passkeySuppressorSource()).catch(() => {});
+      } catch {
+        /* frame already gone */
+      }
+    };
+    run();
+    setTimeout(run, 400);
   }
 
   // ---------- layout / bounds ----------

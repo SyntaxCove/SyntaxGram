@@ -2,10 +2,20 @@
 // Exposes a minimal `window.instagramBridge` used by the injected enhancement
 // layer. The bridge validates payloads before they ever reach IPC (spec §43).
 // The injected code itself never gets Node.js access.
-import { contextBridge, ipcRenderer } from 'electron';
+import { contextBridge, ipcRenderer, webFrame } from 'electron';
 import { IPC } from '../shared/channels';
+import { passkeySuppressorSource } from '../shared/passkeySuppressor';
 import type { AppSettings, InstagramBridgeApi, RegistryQuery, ToastPayload } from '../shared/types';
 import { isDownloadRequestPayload, isRegistryQuery } from '../shared/validators';
+
+// Suppress passkey (WebAuthn) prompts BEFORE any Instagram script runs:
+// evaluate the guard in the page's main world while the preload executes —
+// this is the earliest hook available for the main frame (v0.2.3 fix).
+try {
+  void webFrame.executeJavaScript(passkeySuppressorSource());
+} catch {
+  /* webFrame unavailable — the injection layer installs the guard later */
+}
 
 const bridge: InstagramBridgeApi = {
   requestDownload: (payload) => {

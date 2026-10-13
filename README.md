@@ -32,6 +32,7 @@ SyntaxGram does **not** rebuild Instagram. It runs `https://www.instagram.com` i
 - The destination path is always canonicalized inside the backend-defined Download Root — path traversal is impossible
 - Files are written atomically (`.part` first, then rename) and validated by magic bytes
 - **No bypassing of any kind: no private APIs, no anti-bot / rate-limit evasion, no DRM circumvention.** If a medium can only be obtained by defeating a protection mechanism, the item is reported as `Failed / Unsupported`
+- Passkey (WebAuthn) prompts are **suppressed** inside the embedded view — Instagram's login page otherwise pops a native Windows Security modal here ("Sign in with a passkey"), which the regular browser never shows. Log in with your username/password + 2FA as usual
 - No credential logging, ever
 
 ## Tech stack
@@ -76,7 +77,7 @@ npm run icon        # generate resources/icon.png / icon.ico / tray.png (needs P
 npm run dist        # typecheck + build + electron-builder --win (NSIS x64)
 ```
 
-Output lands in the `release/` folder: `SyntaxGram Setup 0.2.2.exe`
+Output lands in the `release/` folder: `SyntaxGram Setup 0.2.3.exe`
 
 ## Project structure
 
@@ -124,6 +125,7 @@ Instagram only keeps the first ~3 slide `<li>` nodes in the DOM and lazy-mounts 
 ## Troubleshooting
 
 - **Windows SmartScreen shows a warning:** the installer is not digitally signed; choose "More info → Run anyway"
+- **"Sign in with a passkey" window:** intentionally suppressed since v0.2.3 (the embedded view used to pop a native Windows Security modal that the regular browser does not show). Log in with your password + 2FA
 - **Login page won't open:** use the Reload button in the toolbar; the session lives in the `persist:instagram` partition
 - **Download buttons don't appear:** the injection layer re-runs after every navigation; reload the page once
 - **DISK_FULL error:** check the free space of your Download Root
