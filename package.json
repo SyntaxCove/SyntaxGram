@@ -25,7 +25,7 @@
     "start": "electron .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "dist": "npm run typecheck && npm run build && electron-builder --win",
+    "dist": "npm run typecheck && npm run build && node scripts/patch-nsis-wine.mjs && electron-builder --win",
     "dist:dir": "npm run build && electron-builder --win --dir",
     "icon": "python3 scripts/make_icon.py"
   },

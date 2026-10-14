@@ -20,8 +20,21 @@ extraResources:
       - tray.png
 win:
   icon: resources/icon.ico
+  # The release build machine is Linux and cannot run rcedit (a Windows tool
+  # executed through Wine) to embed icon/version resources into the exe.
+  # Skipping keeps the build portable: the app icon is applied at runtime by
+  # MainWindow (BrowserWindow icon), and the NSIS installer still carries the
+  # icon because makensis runs natively on Linux.
+  signAndEditExecutable: false
+  # Two shipping formats:
+  #   nsis — classic installer (Setup exe, per-user, choosable install dir)
+  #   zip  — portable build: unpack anywhere and run SyntaxGram.exe directly,
+  #          leaves no registry entries or uninstaller behind
   target:
     - target: nsis
+      arch:
+        - x64
+    - target: zip
       arch:
         - x64
 nsis:

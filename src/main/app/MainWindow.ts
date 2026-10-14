@@ -45,6 +45,26 @@ export class MainWindowController {
     return this.opts.getTheme?.() ?? 'light';
   }
 
+  /**
+   * Absolute path of the bundled app icon (ico/png), or undefined when the
+   * resource is missing. Mirrors the resourcesDir resolution used for the
+   * tray: process.resourcesPath when packaged, ../../resources in dev.
+   */
+  private resourcesIcon(): string | undefined {
+    const dir = app.isPackaged
+      ? process.resourcesPath
+      : path.resolve(__dirname, '../../resources');
+    for (const name of ['icon.ico', 'icon.png']) {
+      const p = path.join(dir, name);
+      try {
+        if (fs.existsSync(p) && fs.statSync(p).size > 0) return p;
+      } catch {
+        /* try the next candidate */
+      }
+    }
+    return undefined;
+  }
+
   create(): void {
     // ---------- session (persistent Instagram login, spec §4) ----------
     this.igSession = session.fromPartition('persist:instagram');
@@ -67,6 +87,11 @@ export class MainWindowController {
 
     // ---------- main window ----------
     const theme = this.initialTheme();
+    // Window/taskbar icon, resolved at runtime from the bundled resources.
+    // The Windows exe ships without embedded icon resources (the Linux build
+    // environment cannot run rcedit/Wine — see electron-builder.yml), so the
+    // icon must be provided here for the taskbar and alt-tab to look right.
+    const windowIcon = this.resourcesIcon();
     this.win = new BrowserWindow({
       width: 1280,
       height: 840,
@@ -76,6 +101,7 @@ export class MainWindowController {
       frame: false,
       backgroundColor: theme === 'dark' ? '#09090b' : '#f4f4f5',
       title: 'SyntaxGram',
+      icon: windowIcon,
       webPreferences: {
         preload: MAIN_PRELOAD_PATH,
         contextIsolation: true,
