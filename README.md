@@ -114,7 +114,7 @@ Priority order: `DOMResolver` → `MetadataResolver` → `ResourceResolver` → 
 
 ### Carousel expansion
 
-Instagram only keeps the first ~3 slide `<li>` nodes in the DOM and lazy-mounts the rest. Before downloading a multi-slide post, the injection layer programmatically walks the carousel's real Next button until the track ends, captures each slide's element by index, restores the original scroll position and caches the result — so "Download all slides" gets the full slide count, and stale capture is refreshed per open.
+Instagram only keeps the first ~3 slide `<li>` nodes in the DOM, lazy-mounts the rest as you swipe, and additionally **virtualizes** the list — older `<li>` nodes are removed again while you move on, and some surfaces slide via transforms so the scroll position never changes. Before downloading a multi-slide post, the injection layer therefore walks the carousel's real Next/Prev buttons in a round trip: forward to the end of the track, then back to the first slide. While each slide is actually on screen, its media URL is captured and frozen; the round trip also reveals the true absolute slide indexing and restores the user's original position afterwards. The result is cached per track, so "Download all slides" always gets the full slide count with the correct media per slide — even when the DOM only ever held a small window of slides (v0.2.4 fix: previously a virtualized 10-slide post still downloaded as 3 slides).
 
 ## Known limitations (MVP)
 

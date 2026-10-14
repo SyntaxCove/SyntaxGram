@@ -166,7 +166,11 @@ import { BTN_ATTR, createActionButton, ensureStyle, isModalOpen, openCarouselMod
     const currentIndex = car ? CarouselAdapter.currentIndex(car.track) : 0;
 
     if (mode === 'current') {
-      const slide = car ? CarouselAdapter.slideAt(car.track, currentIndex) : post;
+      // Geometry-based pick: stays correct on virtualized/transform carousels
+      // where scroll-position math can select the wrong <li>.
+      const slide = car
+        ? (CarouselAdapter.activeSlideElement(car.track) ?? CarouselAdapter.slideAt(car.track, currentIndex))
+        : post;
       const candidates = await resolver.resolveSlide(slide, ctx);
       if (!candidates.length) {
         pageToast('No downloadable media found', 'error');

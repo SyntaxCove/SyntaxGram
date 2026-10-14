@@ -35,14 +35,20 @@ export class MediaResolver {
   /**
    * Resolve every slide of a post (carousel-aware).
    *
-   * Bug fix: Instagram keeps only the first few <li> slides in the DOM and
-   * lazy-loads the rest while the user swipes, so a 10-slide post was seen
-   * (and downloaded) as 3 slides. `CarouselAdapter.expand()` walks the
-   * carousel first (clicking the real Next button, session-visible only),
-   * yielding the true count plus a reliable element per slide index.
-   * Slides whose media is still not directly accessible are filled from the
-   * resource/network layers. Unresolvable slides are dropped — the app only
-   * ever downloads media that is genuinely available in the current session.
+   * Bug fix (v0.2.2): Instagram keeps only the first few <li> slides in the
+   * DOM and lazy-loads the rest while the user swipes, so a 10-slide post was
+   * seen (and downloaded) as 3 slides. `CarouselAdapter.expand()` walks the
+   * carousel first (clicking the real Next button, session-visible only).
+   *
+   * Bug fix (v0.2.4, user report: "only 3 of 10 slides still download"):
+   * Instagram additionally VIRTUALIZES the carousel — after the walk only a
+   * small window of <li> nodes remains in the DOM, so neither the post-walk
+   * DOM list nor scroll-position math can address slides 4+. The expansion
+   * now freezes each slide's media candidates while that slide is actually
+   * on screen (see CarouselAdapter.expand); those walked media win here, the
+   * element/DOM pass is only a fallback, and the resource/network pool fills
+   * whatever is still missing. Unresolvable slides are dropped — the app
+   * only ever downloads media that is genuinely available in the session.
    */
   async resolvePost(
     post: Element,
@@ -54,7 +60,12 @@ export class MediaResolver {
     const car0 = CarouselAdapter.detect(post);
 
     if (mode === 'current' || !car0) {
-      const slide = car0 ? CarouselAdapter.slideAt(car0.track, CarouselAdapter.currentIndex(car0.track)) : post;
+      // Geometry-based pick: stays correct on virtualized/transform carousels
+      // where scroll-position math can select the wrong <li>.
+      const slide = car0
+        ? (CarouselAdapter.activeSlideElement(car0.track) ??
+          CarouselAdapter.slideAt(car0.track, CarouselAdapter.currentIndex(car0.track)))
+        : post;
       return [{ slide: 0, candidates: await this.resolveSlide(slide, ctx) }];
     }
 
@@ -75,6 +86,14 @@ export class MediaResolver {
     const missing: number[] = [];
     const domResolver = new DOMResolver();
     for (let i = 0; i < total; i++) {
+      // Media frozen during the walk is the most reliable per-slide source:
+      // it was resolved while the slide was on screen, so virtualization or
+      // lazy-unloading after the walk cannot affect it.
+      const walkedMedia = exp.slideMedia?.[i] ?? [];
+      if (walkedMedia.length) {
+        out.push({ slide: i, candidates: walkedMedia });
+        continue;
+      }
       const dom = domResolver.resolveFrom(elementAt(i));
       if (dom.length) out.push({ slide: i, candidates: dom });
       else missing.push(i);

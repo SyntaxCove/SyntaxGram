@@ -2,6 +2,8 @@
 // implemented here; nothing else in the codebase queries Instagram's DOM
 // directly. Hover tracking implements the single-active HoverContext rule
 // (spec §18).
+import type { MediaCandidate } from '../../shared/types';
+import { DOMResolver } from '../resolvers/dom';
 import { InstagramSelectors, LIKE_WORDS, UNLIKE_WORDS, hasLabel } from './selectors';
 
 // ---------------------------------------------------------------- LikeAdapter
@@ -175,6 +177,12 @@ export interface CarouselExpansion {
   /** Per-index slide element references captured while walking the carousel.
    * Index i may be null when the element could not be pinned down. */
   slideEls: (Element | null)[];
+  /** Per-index media candidates frozen while each slide was ACTIVE on screen
+   * during the walk. This is the most reliable per-slide source: virtualizing
+   * the list or lazy-unloading media after the walk cannot affect it. Empty
+   * for slides whose media was not DOM-resolvable (e.g. blob-backed videos —
+   * those are filled from the network layers by MediaResolver). */
+  slideMedia: MediaCandidate[][];
   /** True when a real walk happened (false = served from cache). */
   walked: boolean;
 }
@@ -220,6 +228,37 @@ export class CarouselAdapter {
   }
 
   /**
+   * The slide element currently filling the carousel viewport.
+   *
+   * Geometry-based (rect overlap against the track's viewport) so it stays
+   * correct when Instagram virtualizes the carousel (keeps only a small
+   * window of <li> nodes and removes the rest — scrollLeft no longer maps to
+   * the slide index) or slides with transforms instead of native scrolling.
+   * Falls back to the classic scroll-position mapping when no layout
+   * information exists (jsdom, display:none).
+   */
+  static activeSlideElement(track: HTMLElement): Element | null {
+    const slides = CarouselAdapter.slides(track);
+    if (!slides.length) return null;
+    const vp = track.getBoundingClientRect();
+    if (vp.width <= 0 || vp.height <= 0) {
+      // No layout engine data -> scroll-position mapping (legacy behavior).
+      return CarouselAdapter.slideAt(track, CarouselAdapter.currentIndex(track));
+    }
+    let best: Element | null = null;
+    let bestOverlap = -1;
+    for (const li of slides) {
+      const r = li.getBoundingClientRect();
+      const overlap = Math.min(r.right, vp.right) - Math.max(r.left, vp.left);
+      if (overlap > bestOverlap) {
+        bestOverlap = overlap;
+        best = li;
+      }
+    }
+    return best;
+  }
+
+  /**
    * Finds the carousel's real prev/next navigation button. Instagram renders
    * these with a localized aria-label (e.g. "Next" in English, "Siguiente"
    * in Spanish — see the label lists in selectors.ts for all supported
@@ -249,17 +288,33 @@ export class CarouselAdapter {
 
   /**
    * Makes Instagram render EVERY slide of the carousel, then reports the true
-   * slide count + per-index element references.
+   * slide count, a per-index element reference and per-index media candidates.
    *
-   * Bug fix: Instagram only keeps the first ~2-3 <li> slides in the DOM and
-   * lazy-loads the rest as the user swipes. A 10-slide post therefore looked
-   * like a 3-slide post and "download all" fetched at most 3 items.
+   * Bug fix (v0.2.2): Instagram only keeps the first ~2-3 <li> slides in the
+   * DOM and lazy-loads the rest as the user swipes. A 10-slide post therefore
+   * looked like a 3-slide post and "download all" fetched at most 3 items.
    *
-   * The walk clicks the genuine Next button (exactly what a user does — no
-   * API bypass; every slide becomes visible in the session, which the spec's
-   * session-visibility rule requires) until the track ends, capturing the
-   * slide element at each index, then restores the original position.
-   * Cached per track element, so a second call after the modal is instant.
+   * Bug fix (v0.2.4, user report: "only 3 of 10 slides still download"):
+   * Instagram also VIRTUALIZES the carousel — it keeps only a small window of
+   * <li> nodes and removes the rest while the user swipes. The old walk
+   * indexed slides by scroll position and by the post-walk DOM list, and both
+   * collapse to ~3 entries on a virtualized track, so the count stayed at 3
+   * even though every slide had been visited. The walk now:
+   *   1. detects the active slide by viewport geometry (rect overlap), which
+   *      stays correct under virtualization and transform-based sliders;
+   *   2. freezes each slide's media candidates while that slide is actually
+   *      on screen, so later virtualization / lazy-unloading cannot affect
+   *      the result;
+   *   3. walks the track round-trip — Next to the end, then Prev back to the
+   *      first slide. Reaching the start reveals the true absolute slide
+   *      indexing (each Prev click lands exactly one slide lower), captures
+   *      the slides before the user's position, and parks the carousel at
+   *      slide 0 so the user's position can be restored by clicking forward.
+   *
+   * The walk clicks only the genuine Next/Prev buttons (exactly what a user
+   * does — no API bypass; every slide becomes visible in the session, which
+   * the spec's session-visibility rule requires). Cached per track element,
+   * so a second call after the modal is instant.
    */
   static async expand(
     post: HTMLElement,
@@ -270,8 +325,15 @@ export class CarouselAdapter {
     const maxSlides = opts?.maxSlides ?? 100;
 
     const cached = CarouselAdapter.expansions.get(track);
-    if (cached && cached.slideEls.length > 0 && cached.slideEls.every((el) => !el || el.isConnected)) {
-      return { ...cached, walked: false };
+    if (cached && cached.slideEls.length > 0) {
+      // Valid while every slide either has frozen media from the walk or its
+      // element is still connected (virtualized tracks drop old <li> nodes,
+      // but the frozen media keeps such a cache usable).
+      const usable = cached.slideEls.every((el, i) => {
+        if (cached.slideMedia[i]?.length) return true;
+        return !!el && el.isConnected;
+      });
+      if (usable) return { ...cached, walked: false };
     }
     if (CarouselAdapter.expanding.has(track)) {
       // A walk is already running on this track; wait for it instead of
@@ -283,59 +345,142 @@ export class CarouselAdapter {
     CarouselAdapter.expanding.add(track);
     try {
       const originalLeft = track.scrollLeft;
-      const collected = new Map<number, Element>();
-      const list = () => CarouselAdapter.slides(track);
-      const capture = (): void => {
-        const els = list();
-        if (!els.length) return;
-        const idx = Math.min(CarouselAdapter.currentIndex(track), els.length - 1);
-        if (idx >= 0 && els[idx]) collected.set(idx, els[idx]!);
-      };
-      capture();
+      const domResolver = new DOMResolver();
 
-      let guard = 0;
-      while (guard++ < maxSlides + 2) {
-        const next = CarouselAdapter.navButton(post, 'next');
-        if (!next) break; // Instagram removes/disables it on the last slide
-        const beforeLeft = track.scrollLeft;
-        const beforeCount = list().length;
+      // Signature of what the user currently sees: slide count, scroll offset
+      // and the active slide's media. Comparing it before/after a click
+      // detects progress on every carousel implementation Instagram ships
+      // (scroll-snap, virtualized window, transform slider) — including the
+      // ones where scrollLeft never changes.
+      const seen = (): string => {
+        const el = CarouselAdapter.activeSlideElement(track);
+        const img = el?.querySelector('img');
+        const vid = el?.querySelector('video');
+        return [
+          CarouselAdapter.slides(track).length,
+          track.scrollLeft,
+          img?.getAttribute('src') ?? vid?.currentSrc ?? vid?.src ?? '',
+        ].join('|');
+      };
+
+      // One genuine navigation click; true when the carousel actually moved.
+      const step = async (dir: 'next' | 'prev'): Promise<boolean> => {
+        const btn = CarouselAdapter.navButton(post, dir);
+        if (!btn) return false; // removed/disabled -> end of the track
+        const before = seen();
         try {
-          next.click();
+          btn.click();
         } catch {
-          break;
+          return false;
         }
         // Wait until the track actually advances or new slides render
         // (bounded ~1.5s so a stalled UI can never hang the action).
         let advanced = false;
         for (let tick = 0; tick < 5; tick++) {
           await delay(stepMs / 2);
-          if (track.scrollLeft !== beforeLeft || list().length !== beforeCount) {
+          if (seen() !== before) {
             advanced = true;
             break;
           }
         }
+        if (!advanced) return false; // clicked but nothing changed -> end
         await delay(stepMs / 2); // let the newly active slide load its media
-        capture();
-        if (!advanced) break; // clicked but nothing changed -> end of track
-        if (list().length >= maxSlides) break;
+        return true;
+      };
+
+      // Media snapshot of the slide that is on screen right now.
+      const snapshot = (): { el: Element | null; media: MediaCandidate[] } => {
+        const el = CarouselAdapter.activeSlideElement(track);
+        return { el, media: el ? domResolver.resolveFrom(el) : [] };
+      };
+
+      const initial = snapshot(); // the slide the user was on
+      const forwardSnaps: { el: Element | null; media: MediaCandidate[] }[] = [];
+      const backwardSnaps: { el: Element | null; media: MediaCandidate[] }[] = [];
+
+      // 1. Forward walk: from the user's slide to the end of the track.
+      let forward = 0;
+      for (let guard = 0; guard < maxSlides + 2; guard++) {
+        if (!(await step('next'))) break;
+        forward++;
+        forwardSnaps.push(snapshot());
+        if (forward >= maxSlides) break;
       }
 
-      // Put the carousel back where the user had it.
-      try {
-        track.scrollLeft = originalLeft;
-      } catch {
-        /* ignore */
+      // 2. Backward walk: from the end back to the first slide. Reaching the
+      //    start yields the true absolute indexing, captures the slides
+      //    before the user's position, and parks the carousel at slide 0.
+      let backward = 0;
+      for (let guard = 0; guard < maxSlides + 2; guard++) {
+        if (!(await step('prev'))) break;
+        backward++;
+        backwardSnaps.push(snapshot());
+        if (backward >= maxSlides) break;
+      }
+      // A failed Prev step means "slide 0" (Instagram removes/disables Prev
+      // there) — or a surface without any Prev at all (nothing was walked).
+      const reachedStart = backward > 0 || forward === 0;
+
+      // First good capture wins; a later pass may fill media for slides whose
+      // first snapshot had none (e.g. video slides that loaded late).
+      const visited = new Map<number, { el: Element | null; media: MediaCandidate[] }>();
+      const put = (idx: number, snap: { el: Element | null; media: MediaCandidate[] }): void => {
+        const prevEntry = visited.get(idx);
+        if (!prevEntry || (!prevEntry.media.length && snap.media.length)) visited.set(idx, snap);
+      };
+
+      let startIdx: number;
+      let count: number;
+      if (reachedStart) {
+        // Absolute indexing derived from the round-trip itself: the backward
+        // walk needed exactly `backward` clicks to reach slide 0, so the last
+        // slide is index `backward` and the user's slide is `backward -
+        // forward` — no reliance on scroll math at all.
+        const endIdx = backward;
+        startIdx = Math.max(0, endIdx - forward);
+        put(startIdx, initial);
+        forwardSnaps.forEach((snap, j) => put(startIdx + 1 + j, snap));
+        backwardSnaps.forEach((snap, k) => put(endIdx - (k + 1), snap));
+        // 3. Restore the position the user was on: the backward walk ended at
+        //    slide 0, so click forward again.
+        for (let k = 0; k < startIdx; k++) {
+          const next = CarouselAdapter.navButton(post, 'next');
+          if (!next) break;
+          try {
+            next.click();
+          } catch {
+            break;
+          }
+          await delay(stepMs / 3);
+        }
+        count = Math.max(endIdx + 1, CarouselAdapter.slides(track).length);
+      } else {
+        // Prev unavailable — fall back to scroll-position-based indexing.
+        startIdx = Math.min(
+          Math.max(0, CarouselAdapter.currentIndex(track)),
+          Math.max(0, CarouselAdapter.slides(track).length - 1),
+        );
+        put(startIdx, initial);
+        forwardSnaps.forEach((snap, j) => put(startIdx + 1 + j, snap));
+        const keys = Array.from(visited.keys());
+        count = Math.max(Math.max(...keys) - Math.min(...keys) + 1, CarouselAdapter.slides(track).length);
+        try {
+          track.scrollLeft = originalLeft;
+        } catch {
+          /* ignore */
+        }
       }
       await delay(Math.min(stepMs, 200));
 
-      const els = list();
-      const count = Math.max(collected.size, els.length);
+      const els = CarouselAdapter.slides(track);
       const slideEls: (Element | null)[] = [];
+      const slideMedia: MediaCandidate[][] = [];
       for (let i = 0; i < count; i++) {
-        const c = collected.get(i);
-        slideEls.push(c && c.isConnected ? c : (els[i] ?? null));
+        const entry = visited.get(i);
+        slideEls.push(entry?.el && entry.el.isConnected ? entry.el : (els[i] ?? null));
+        slideMedia.push(entry?.media ?? []);
       }
-      const result: CarouselExpansion = { count, slideEls, walked: true };
+      const result: CarouselExpansion = { count, slideEls, slideMedia, walked: true };
       if (slideEls.length > 0) CarouselAdapter.expansions.set(track, result);
       return result;
     } finally {
